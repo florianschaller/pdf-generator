@@ -3,13 +3,15 @@ import * as puppeteer from 'puppeteer';
 
 import { DEFAULT_PDF_FONT, renderPdfDocument, setPdfMetadata } from './helpers';
 
-import { isWithTemplate, PDFDocumentData } from '@stemys/pdf-generator/constants';
+import {
+  isWithTemplate,
+  PDFDocumentData,
+} from '@stemys/pdf-generator/constants';
 import { TemplateRenderingService } from '../template-rendering/template-rendering.service';
 import axios from 'axios';
 
 @Injectable()
 export class PdfGeneratorService {
-
   constructor(private templateRenderingService: TemplateRenderingService) {}
 
   async generatePdf(data: PDFDocumentData) {
@@ -18,12 +20,12 @@ export class PdfGeneratorService {
        * Adding `--no-sandbox` here is for easier deployment. Please see puppeteer docs about
        * this argument and why you may not want to use it.
        */
-      args: [`--no-sandbox`]
+      args: [`--no-sandbox`],
     });
 
     const pdfData = {
       ...data,
-      font: data.font ?? DEFAULT_PDF_FONT
+      font: data.font ?? DEFAULT_PDF_FONT,
     } as PDFDocumentData;
 
     let template: string;
@@ -39,13 +41,16 @@ export class PdfGeneratorService {
       }
     }
 
-    const documentBody = this.templateRenderingService.generateHtml(template, pdfData.data);
+    const documentBody = this.templateRenderingService.generateHtml(
+      template,
+      pdfData.data
+    );
     const content = renderPdfDocument(pdfData, documentBody);
     const pdfOptions = pdfData?.options || {};
 
     const page = await browser.newPage();
     await page.setContent(content, {
-      waitUntil: 'networkidle2'
+      waitUntil: 'networkidle2',
     });
     const pdf = await page.pdf({
       format: 'a4',
@@ -57,8 +62,8 @@ export class PdfGeneratorService {
         right: '40px',
         top: '40px',
         bottom: '40px',
-        ...(pdfOptions?.margin || {})
-      }
+        ...(pdfOptions?.margin || {}),
+      },
     });
 
     const result = await setPdfMetadata(pdf, pdfData?.metadata);

@@ -14,26 +14,44 @@ describe('POST /api/pdf-generator/generate', () => {
     path.join(templatesFolderPath, 'invoice.hbs'),
     'utf-8'
   );
+  const invoicePDFDocumentData: PDFDocumentData = {
+    template: invoiceTemplate,
+    data: invoiceData,
+    metadata: {
+      title: 'Test title',
+      subject: 'Test subject',
+      author: 'This is the author',
+      producer: 'This is the producer',
+      creator: 'This is the creator',
+    },
+  }
+
+  it('should return 401 if no authorization header is provided', async () => {
+    let errorCaught = false;
+
+    try {
+      await axios.post(`/api/pdf-generator/generate`, invoicePDFDocumentData);
+    } catch (error) {
+      if (error instanceof AxiosError && error.response) {
+        errorCaught = true;
+        expect(error.response.status).toBe(401);
+        expect(error.response.data.error).toBe('Unauthorized');
+      }
+    }
+
+    if (!errorCaught) {
+      throw new Error('Request did not fail as expected');
+    }
+  });
 
   it('generate a PDF with the data passed in the request body', async () => {
-    const data: PDFDocumentData = {
-      template: invoiceTemplate,
-      data: invoiceData,
-      metadata: {
-        title: 'Test title',
-        subject: 'Test subject',
-        author: 'This is the author',
-        producer: 'This is the producer',
-        creator: 'This is the creator',
-      },
-    };
     try {
-      const res = await axios.post(`/api/pdf-generator/generate`, data);
+      const res = await axios.post(`/api/pdf-generator/generate`, invoicePDFDocumentData, { headers: getHeaders() });
       outputFile('invoice.pdf', res.data.data);
       expect(res.status).toBe(201);
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
-        throw new Error(`Request failed with status ${error.response?.status}: ${error.response?.data}`);
+        throw new Error(`Request failed with status ${error.response?.status}: ${JSON.stringify(error.response?.data)}`);
       } else {
         throw new Error(`An unexpected error occurred : ${error.message}`);
       }
@@ -50,4 +68,12 @@ describe('POST /api/pdf-generator/generate', () => {
       throw new Error(`Failed to save the file at ${outputPath}`);
     }
   };
+
+  const getHeaders = () => {
+    const username = 'admin';
+    const password = 'changeIt1!';
+    return {
+      Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
+    }
+  }
 });
