@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 
 import { DEFAULT_PDF_FONT, renderPdfDocument, setPdfMetadata } from './helpers';
@@ -12,6 +12,8 @@ import axios from 'axios';
 
 @Injectable()
 export class PdfGeneratorService {
+  private readonly logger = new Logger(PdfGeneratorService.name);
+
   constructor(private templateRenderingService: TemplateRenderingService) {}
 
   async generatePdf(data: PDFDocumentData) {
@@ -41,7 +43,7 @@ export class PdfGeneratorService {
       }
     }
 
-    const documentBody = this.templateRenderingService.generateHtml(
+    const documentBody = this.templateRenderingService.compileTemplate(
       template,
       pdfData.data
     );
@@ -49,13 +51,19 @@ export class PdfGeneratorService {
     const pdfOptions = pdfData?.options || {};
 
     const page = await browser.newPage();
+
+    page.on('console', (msg) => this.logger.debug(msg.text()));
+
     await page.setContent(content, {
-      waitUntil: 'networkidle2',
+      waitUntil: 'domcontentloaded',
     });
     const pdf = await page.pdf({
       format: 'a4',
       printBackground: true,
       preferCSSPageSize: true,
+      displayHeaderFooter: !!pdfData.headerTemplate || !!pdfData.footerTemplate,
+      headerTemplate: pdfData.headerTemplate || '<div></div>',
+      footerTemplate: pdfData.footerTemplate || '<div></div>',
       ...pdfOptions,
       margin: {
         left: '40px',

@@ -6,7 +6,7 @@ import { PDFDocumentDataForm } from '../dtos';
 export class PdfGeneratorController {
   constructor(private pdfGeneratorService: PdfGeneratorService) {}
 
-  @Post('/generate')
+  @Post('/')
   async generatePdf(@Body() pdfDocumentDataForm: PDFDocumentDataForm) {
     return this.pdfGeneratorService.generatePdf(pdfDocumentDataForm);
   }

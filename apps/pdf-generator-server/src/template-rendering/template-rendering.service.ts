@@ -3,7 +3,7 @@ import Handlebars from 'handlebars';
 
 @Injectable()
 export class TemplateRenderingService {
-  generateHtml(template: string, data: object): string {
+  compileTemplate(template: string, data: object): string {
     const compiledTemplate = Handlebars.compile(template);
     return compiledTemplate(data);
   }

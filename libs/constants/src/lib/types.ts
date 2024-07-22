@@ -23,6 +23,8 @@ export interface PDFDocumentData {
   data: any;
   template?: string;
   templateUrl?: string;
+  headerTemplate?: string;
+  footerTemplate?: string;
   metadata: PDFMetadata;
   options?: PDFOptions;
   font?: Font;
@@ -30,8 +32,8 @@ export interface PDFDocumentData {
 
 export const isWithTemplate = (data: PDFDocumentData) => {
   return data.template !== undefined;
-}
+};
 
 export const isWithTemplateUrl = (data: PDFDocumentData) => {
   return data.templateUrl !== undefined;
-}
+};

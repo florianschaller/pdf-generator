@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsOptional, IsString, IsUrl, ValidateIf, ValidateNested } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 import { PDFDocumentData } from '@stemys/pdf-generator/constants';
 import { PDFMetadataForm } from './pdf-metadata';
 import { Type } from 'class-transformer';
@@ -18,4 +25,10 @@ export class PDFDocumentDataForm implements PDFDocumentData {
   @IsUrl()
   @ValidateIf((obj) => obj.template || obj.templateUrl)
   templateUrl?: string;
+  @IsOptional()
+  @IsString()
+  headerTemplate?: string;
+  @IsOptional()
+  @IsString()
+  footerTemplate?: string;
 }

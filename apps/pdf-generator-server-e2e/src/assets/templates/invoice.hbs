@@ -1,93 +1,84 @@
 <style>
-  .invoice-box {
+  .pdf-content {
     max-width: 800px;
-    margin: auto;
-    padding: 30px;
-    border: 1px solid #eee;
-    box-shadow: 0 0 10px rgba(0, 0, 0, .15);
     font-size: 16px;
     line-height: 24px;
     font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
     color: #555;
   }
 
-  .invoice-box table {
+  .pdf-content table {
     width: 100%;
     line-height: inherit;
     text-align: left;
   }
 
-  .invoice-box table td {
+  .pdf-content table td {
     padding: 5px;
     vertical-align: top;
   }
 
-  .invoice-box table tr td:nth-child(2) {
+  .pdf-content table tr td:nth-child(2) {
     text-align: right;
   }
 
-  .invoice-box table tr.top table td {
+  .pdf-content table tr.top table td {
     padding-bottom: 20px;
   }
 
-  .invoice-box table tr.top table td.title {
+  .pdf-content table tr.top table td.title {
     font-size: 45px;
     line-height: 45px;
     color: #333;
   }
 
-  .invoice-box table tr.information table td {
+  .pdf-content table tr.information table td {
     padding-bottom: 40px;
   }
 
-  .invoice-box table tr.heading td {
+  .pdf-content table tr.heading td {
     background: #eee;
     border-bottom: 1px solid #ddd;
     font-weight: bold;
   }
 
-  .invoice-box table tr.details td {
+  .pdf-content table tr.details td {
     padding-bottom: 20px;
   }
 
-  .invoice-box table tr.item td {
+  .pdf-content table tr.item td {
     border-bottom: 1px solid #eee;
   }
 
-  .invoice-box table tr.item.last td {
+  .pdf-content table tr.item.last td {
     border-bottom: none;
   }
 
-  .invoice-box table tr.total td:nth-child(2) {
+  .pdf-content table tr.total td:nth-child(2) {
     font-weight: bold;
   }
 
   @media only screen and (max-width: 600px) {
-    .invoice-box table tr.top table td {
+    .pdf-content table tr.top table td {
       width: 100%;
       display: block;
       text-align: center;
     }
 
-    .invoice-box table tr.information table td {
+    .pdf-content table tr.information table td {
       width: 100%;
       display: block;
       text-align: center;
     }
   }
 
-  /** RTL **/
-  .rtl {
-    direction: rtl;
-    font-family: Tahoma, 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
-  }
-
-  .rtl table {
-    text-align: right;
-  }
-
-  .rtl table tr td:nth-child(2) {
-    text-align: left;
+  .chart-container {
+    display: block;
+    width: 100%;
+    height: 400px;
+    page-break-before: auto;
+    page-break-after: auto;
+    page-break-inside: avoid;
   }
 </style>
 
@@ -96,7 +87,7 @@
   <div style="border-width: 6px;border-style: solid; border-color: #008000;border-radius: 8px; color: #008000; opacity:0.6; position: absolute; z-index: 1; left:40%; top:30%; font-size: 60pt;-webkit-transform: rotate(-45deg);-ms-transform: rotate(-45deg);transform: rotate(-45deg); font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;">
     PAID </div>
   {{/if}}
-  <div class="invoice-box">
+  <div class="pdf-content">
     <table cellpadding="0" cellspacing="0">
       <tr class="top">
         <td colspan="2">
@@ -123,7 +114,6 @@
                 12345 Sunny Road<br>
                 Sunnyville, CA 12345
               </td>
-
               <td>
                 Sam Corp.<br>
                 Sam Sam<br>
@@ -138,7 +128,6 @@
         <td>
           Item
         </td>
-
         <td>
           Price
         </td>
@@ -157,11 +146,94 @@
 
       <tr class="total">
         <td></td>
-
         <td>
           Total: $ {{total}}
         </td>
       </tr>
     </table>
+
+    <div class="chart-container" id="pi-chart-container"></div>
+
+    <div class="chart-container" id="control-card-container"></div>
   </div>
 </div>
+<!--
+The scripts could be inlined using base64
+<script src="data:text/javascript;base64,"></script>
+-->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script>
+  (() => {
+    const pieChartContainer = document.getElementById('pi-chart-container');
+    const pieChart = echarts.init(pieChartContainer);
+    const pieChartOption = {
+      animation: false,
+      title: {
+        text: '{{piChart.title}}',
+        subtext: '{{piChart.subTitle}}',
+        left: 'center'
+      },
+      legend: {
+        orient: 'vertical',
+        left: 'left'
+      },
+      series: [
+        {
+          name: 'Access From',
+          type: 'pie',
+          radius: '50%',
+          data: [
+            {{#each piChart.data}}
+            { value: {{this.value}}, name: '{{this.name}}', color: '{{this.color}}' },
+            {{/each}}
+          ]
+        }
+      ]
+    };
+
+    pieChart.setOption(pieChartOption);
+
+    const controlCardContainer = document.getElementById('control-card-container');
+    const controlCardChart = echarts.init(controlCardContainer);
+    const controlCardOption = {
+      animation: false,
+      title: {
+        text: '{{piChart.title}}',
+        subtext: '{{piChart.subTitle}}',
+        left: 'center'
+      },
+      xAxis: {
+        type: 'time'
+      },
+      yAxis: {
+        type: 'value',
+          min: 'dataMin',
+          max: 'dataMax',
+          axisLabel: {
+          showMinLabel: false,
+            showMaxLabel: false
+        }
+      },
+      series: [
+        {
+          type: 'line',
+          data: [
+            {{#each controlCardChart.data}}
+              [{{this.[0]}}, {{this.[1]}}],
+            {{/each}}
+          ],
+          tooltip: {
+            show: true,
+          },
+          lineStyle: {
+            color: '#62b0e7',
+            type: 'solid',
+            width: 1,
+          },
+        },
+      ],
+    };
+
+    controlCardChart.setOption(controlCardOption);
+  })();
+</script>

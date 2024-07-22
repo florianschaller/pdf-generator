@@ -1,15 +1,12 @@
 import axios, { AxiosError } from 'axios';
 import { PDFDocumentData } from '@stemys/pdf-generator/constants';
 import * as path from 'path';
-import { outputFileSync, readFileSync } from 'fs-extra';
-import * as invoiceData from '../assets/templates/invoice.hbs.json';
+import { readFileSync } from 'fs-extra';
+import * as invoiceData from './assets/templates/invoice.hbs.json';
+import { getHeaders, outputFile } from './utils';
 
 describe('POST /api/pdf-generator/generate', () => {
-  const distFolderPath = path.resolve(
-    __dirname,
-    '../../../../dist/apps/pdf-generator-server-e2e'
-  );
-  const templatesFolderPath = path.resolve(__dirname, '../assets/templates');
+  const templatesFolderPath = path.resolve(__dirname, 'assets/templates');
   const invoiceTemplate = readFileSync(
     path.join(templatesFolderPath, 'invoice.hbs'),
     'utf-8'
@@ -17,6 +14,8 @@ describe('POST /api/pdf-generator/generate', () => {
   const invoicePDFDocumentData: PDFDocumentData = {
     template: invoiceTemplate,
     data: invoiceData,
+    // Checkout documentation at https://pptr.dev/api/puppeteer.pdfoptions#headertemplate
+    headerTemplate: `<div style="font-size: 10px; display: block; width: 100%; text-align: center;"><span class="pageNumber"></span>/<span class="totalPages"></span></div>`,
     metadata: {
       title: 'Test title',
       subject: 'Test subject',
@@ -24,13 +23,13 @@ describe('POST /api/pdf-generator/generate', () => {
       producer: 'This is the producer',
       creator: 'This is the creator',
     },
-  }
+  };
 
   it('should return 401 if no authorization header is provided', async () => {
     let errorCaught = false;
 
     try {
-      await axios.post(`/api/pdf-generator/generate`, invoicePDFDocumentData);
+      await axios.post(`/api/pdf-generator`, invoicePDFDocumentData);
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
         errorCaught = true;
@@ -46,34 +45,23 @@ describe('POST /api/pdf-generator/generate', () => {
 
   it('generate a PDF with the data passed in the request body', async () => {
     try {
-      const res = await axios.post(`/api/pdf-generator/generate`, invoicePDFDocumentData, { headers: getHeaders() });
+      const res = await axios.post(
+        `/api/pdf-generator`,
+        invoicePDFDocumentData,
+        { headers: getHeaders() }
+      );
       outputFile('invoice.pdf', res.data.data);
       expect(res.status).toBe(201);
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
-        throw new Error(`Request failed with status ${error.response?.status}: ${JSON.stringify(error.response?.data)}`);
+        throw new Error(
+          `Request failed with status ${
+            error.response?.status
+          }: ${JSON.stringify(error.response?.data)}`
+        );
       } else {
         throw new Error(`An unexpected error occurred : ${error.message}`);
       }
     }
   });
-
-  const outputFile = (fileName: string, file: ArrayBuffer) => {
-    const outputPath = path.join(distFolderPath, fileName);
-    const buffer = Buffer.from(file);
-    try {
-      outputFileSync(outputPath, buffer);
-      console.log(`File saved at ${outputPath}`);
-    } catch {
-      throw new Error(`Failed to save the file at ${outputPath}`);
-    }
-  };
-
-  const getHeaders = () => {
-    const username = 'admin';
-    const password = 'changeIt1!';
-    return {
-      Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
-    }
-  }
 });
