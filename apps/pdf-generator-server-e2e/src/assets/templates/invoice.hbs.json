@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "name": "item 1",
+      "price": 100
+    },
+    {
+      "name": "item 2",
+      "price": 200
+    },
+    {
+      "name": "item 3",
+      "price": 300
+    }
+  ],
+  "total": 600,
+  "isWatermark": true
+}

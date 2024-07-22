@@ -9,7 +9,8 @@
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
       "options": {
         "jestConfig": "apps/pdf-generator-server-e2e/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "assets": ["apps/pdf-generator-server-e2e/src/assets"]
       },
       "dependsOn": ["pdf-generator-server:build"]
     }
